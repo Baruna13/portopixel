@@ -2,7 +2,7 @@ import { AnimatePresence } from "framer-motion";
 import { useGameNavigation } from "@/hooks/useGameNavigation";
 import { PageShell } from "@/components/layout/PageShell";
 import { GameTransition } from "@/components/game/GameTransition";
-import { Hero } from "@/components/sections/Hero";
+import { ScrollIntro } from "@/components/sections/ScrollIntro";
 import { About } from "@/components/sections/About";
 import { Projects } from "@/components/sections/Projects";
 import { Skills } from "@/components/sections/Skills";
@@ -13,7 +13,8 @@ export default function App() {
   const { hasStarted, start, activePath, navigate } = useGameNavigation();
 
   if (!hasStarted) {
-    return <Hero onStart={start} />;
+    // ScrollIntro renders the existing <Hero /> as its last scene.
+    return <ScrollIntro onStart={start} />;
   }
 
   return (
