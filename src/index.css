@@ -91,3 +91,42 @@
     scroll-behavior: auto !important;
   }
 }
+
+/* Placeholder for projects that don't have screenshots yet (TV static look). */
+.no-signal {
+  background-color: #0f172a;
+  background-image:
+    repeating-linear-gradient(0deg, rgba(125, 211, 252, 0.08) 0 2px, transparent 2px 4px),
+    repeating-linear-gradient(90deg, rgba(125, 211, 252, 0.06) 0 4px, transparent 4px 8px);
+  animation: noiseShift 0.4s steps(4) infinite;
+}
+
+@keyframes noiseShift {
+  0% {
+    background-position:
+      0 0,
+      0 0;
+  }
+  100% {
+    background-position:
+      0 8px,
+      8px 0;
+  }
+}
+
+/* Locked trophy "access denied" shake (used with steps() so it stays pixel-y). */
+@keyframes shake {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  25% {
+    transform: translateX(-6px);
+  }
+  50% {
+    transform: translateX(6px);
+  }
+  75% {
+    transform: translateX(-4px);
+  }
+}

@@ -45,6 +45,8 @@ export interface Achievement {
   title: string;
   /** Only present for unlocked achievements with confirmed detail. */
   subtitle?: string;
+  /** Result/placement as confirmed, e.g. "Semifinalist". Only for confirmed results. */
+  rank?: string;
   organizer?: string;
   /** Human-readable date as confirmed (e.g. "October 2025"), not a Date object. */
   date?: string;

@@ -22,6 +22,8 @@ export const SKILLS: Skill[] = [
   // DATABASE
   { name: "MySQL", category: "DATABASE" },
   { name: "Prisma", category: "DATABASE" },
+  { name: "MongoDB", category: "DATABASE" },
+  { name: "Supabase", category: "DATABASE" },
 
   // OTHER
   { name: "REST API", category: "OTHER" },

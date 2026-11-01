@@ -9,6 +9,6 @@ import type { SocialLinks } from "@/types";
 export const SOCIAL_LINKS: SocialLinks = {
   github: "https://github.com/",
   linkedin: "https://linkedin.com/",
-  email: "contact@example.com",
+  email: "mochamademilbaruna@gmail.com",
   resumeUrl: undefined,
 };

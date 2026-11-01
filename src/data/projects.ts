@@ -27,6 +27,7 @@ export const PROJECTS: Project[] = [
       "Community verification",
       "Authentication and authorization",
     ],
+    liveUrl: "https://akseskota.vercel.app",
   },
   {
     id: "re-food",
