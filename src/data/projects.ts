@@ -1,13 +1,8 @@
 import type { Project } from "@/types";
 
 /**
- * Verified project data only. Every field here is sourced directly from
- * ARCHITECTURE.md §6–§10. Do NOT add stats, results, client names, user
- * counts, or repo/live URLs unless explicitly confirmed — leave the
- * optional fields unset instead.
- *
- * Trisis GYM Web and Trisis GYM Mobile are kept as two separate entries
- * per explicit instruction — do not merge them.
+ * Keep project details factual; only add metrics, outcomes, and links when
+ * they are confirmed. Trisis GYM Web and Mobile are separate projects.
  */
 export const PROJECTS: Project[] = [
   {
@@ -91,5 +86,23 @@ export const PROJECTS: Project[] = [
       "Admin dashboard",
       "Database management",
     ],
+  },
+  {
+    id: "riecharge",
+    missionNumber: 6,
+    title: "Rie.Charge — Juice E-commerce Website",
+    role: "Backend Developer",
+    status: "Completed",
+    purpose:
+      "An e-commerce website for browsing and ordering fresh juices, fitshots, and other healthy products.",
+    tech: ["Laravel", "PHP", "MySQL", "REST API"],
+    features: [
+      "Product catalog with category filters",
+      "Product descriptions and pricing",
+      "Shopping cart",
+      "Next-day delivery date information",
+      "Featured products and bundle offers",
+    ],
+    liveUrl: "https://riecharge.infinityfreeapp.com/index.php",
   },
 ];
