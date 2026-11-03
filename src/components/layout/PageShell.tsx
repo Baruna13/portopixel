@@ -6,10 +6,12 @@ import type { NavPath } from "@/hooks/useGameNavigation";
 interface PageShellProps {
   activePath: NavPath;
   onNavigate: (path: NavPath) => void;
+  /** When provided, the header shows a button that walks back out to the city map. */
+  onExitToMap?: () => void;
   children: ReactNode;
 }
 
-export function PageShell({ activePath, onNavigate, children }: PageShellProps) {
+export function PageShell({ activePath, onNavigate, onExitToMap, children }: PageShellProps) {
   return (
     <div className="min-h-screen bg-surface-container-lowest flex items-center justify-center md:p-container-margin">
       <div className="relative w-full max-w-[1200px] md:aspect-[16/10] bg-surface-container border-0 md:border-[12px] border-surface-variant shadow-none md:shadow-[12px_12px_0_0_#020617] flex flex-col overflow-hidden min-h-[100dvh] md:min-h-0">
@@ -20,11 +22,22 @@ export function PageShell({ activePath, onNavigate, children }: PageShellProps) 
               Status: Always Learning
             </span>
           </div>
-          <div className="w-8 h-8 bg-primary flex items-center justify-center border-2 border-on-primary shadow-[2px_2px_0_0_#082f49]">
-            <span aria-hidden="true" className="text-on-primary text-sm leading-none">
-              ●
-            </span>
-          </div>
+          {onExitToMap ? (
+            <button
+              type="button"
+              onClick={onExitToMap}
+              aria-label="Back to city map"
+              className="flex items-center gap-2 bg-primary px-3 py-2 border-2 border-on-primary shadow-[2px_2px_0_0_#082f49] font-label-sm text-label-sm text-on-primary hover:brightness-110 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/60"
+            >
+              ◀ CITY MAP
+            </button>
+          ) : (
+            <div className="w-8 h-8 bg-primary flex items-center justify-center border-2 border-on-primary shadow-[2px_2px_0_0_#082f49]">
+              <span aria-hidden="true" className="text-on-primary text-sm leading-none">
+                ●
+              </span>
+            </div>
+          )}
         </header>
 
         <div className="flex flex-1 overflow-hidden relative">

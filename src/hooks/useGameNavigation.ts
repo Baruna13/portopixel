@@ -23,6 +23,10 @@ export function useGameNavigation(initial: NavPath = "profile") {
   const [hasStarted, setHasStarted] = useState(false);
   const [activePath, setActivePath] = useState<NavPath>(initial);
   const [activeProjectId, setActiveProjectId] = useState<string | null>(null);
+  // Open-world: true while the player is walking around the city map.
+  const [inWorld, setInWorld] = useState(false);
+  // The last building the player went into: they spawn at its door when they come back.
+  const [lastEntered, setLastEntered] = useState<NavPath | null>(null);
 
   // Browser back/forward button closes / reopens the project detail page.
   useEffect(() => {
@@ -57,15 +61,32 @@ export function useGameNavigation(initial: NavPath = "profile") {
   const navigate = (path: NavPath) => {
     setActivePath(path);
     setActiveProjectId(null);
+    setLastEntered(path);
   };
+
+  const enterBuilding = (path: NavPath) => {
+    setActivePath(path);
+    setActiveProjectId(null);
+    setLastEntered(path);
+    setInWorld(false);
+  };
+
+  const returnToWorld = () => setInWorld(true);
 
   return {
     hasStarted,
-    start: () => setHasStarted(true),
+    start: () => {
+      setHasStarted(true);
+      setInWorld(true);
+    },
     activePath,
     navigate,
     activeProjectId,
     openProject,
     closeProject,
+    inWorld,
+    lastEntered,
+    enterBuilding,
+    returnToWorld,
   };
 }
