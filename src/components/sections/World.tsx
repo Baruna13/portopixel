@@ -1,7 +1,18 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { motion } from "framer-motion";
 import type { NavPath } from "@/hooks/useGameNavigation";
-import { AVATAR, BUILDINGS, WELCOME_SIGN, WORLD, type Building } from "@/data/worldMap";
+import {
+  AVATAR,
+  BUILDINGS,
+  NPCS,
+  NPC_SHEET,
+  NPC_TALK_RANGE,
+  WELCOME_SIGN,
+  WORLD,
+  type Building,
+  type Npc,
+  type SheetSpec,
+} from "@/data/worldMap";
 import { usePrefersReducedMotion } from "@/hooks/useMediaQuery";
 import { PixelButton } from "@/components/ui/PixelButton";
 import skyUrl from "@/assets/world/sky.png";
@@ -11,15 +22,44 @@ import backUrl from "@/assets/world/back.png";
 import streetUrl from "@/assets/world/street.png";
 import avatarUrl from "@/assets/world/avatar-walk.png";
 
+// Every PNG dropped into src/assets/npcs/ is picked up automatically (matched to an NPC by file name).
+const npcModules = import.meta.glob("../../assets/npcs/*.png", {
+  eager: true,
+  query: "?url",
+  import: "default",
+}) as Record<string, string>;
+const npcSheetUrl = (id: string) => Object.entries(npcModules).find(([path]) => path.endsWith(`/${id}.png`))?.[1];
+
 interface WorldProps {
   /** Building the player just came out of; they spawn at its door. */
   spawnPath?: NavPath | null;
   onEnter: (path: NavPath) => void;
 }
 
+interface NpcState {
+  cfg: Npc;
+  img: HTMLImageElement;
+  sheet: SheetSpec;
+  x: number;
+  dir: 1 | -1;
+  walkT: number;
+  pause: number;
+  phase: number;
+  moving: boolean;
+}
+
 const WALK_SPEED = 70; // logical px / second
 const RUN_SPEED = 120;
+const HELP_SEEN_KEY = "portopixel-help-seen";
 const clamp = (n: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, n));
+
+const loadImage = (src: string) =>
+  new Promise<HTMLImageElement>((resolve, reject) => {
+    const im = new Image();
+    im.onload = () => resolve(im);
+    im.onerror = () => reject(new Error(`Failed to load ${src}`));
+    im.src = src;
+  });
 
 /** Squares that pop in at random: the "door transition" when entering a building. */
 function PixelCover() {
@@ -76,21 +116,72 @@ function HoldButton({
   );
 }
 
+/** A keyboard key drawn as a chunky pixel keycap. */
+function Key({ children }: { children: ReactNode }) {
+  return (
+    <kbd className="inline-flex min-w-8 items-center justify-center border-2 border-primary bg-surface px-2 py-1 font-label-sm text-label-sm text-primary shadow-[2px_2px_0_0_#020617]">
+      {children}
+    </kbd>
+  );
+}
+
+function HelpRow({ groups, text }: { groups: string[][]; text: string }) {
+  return (
+    <li className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+      <span className="flex flex-wrap items-center gap-2">
+        {groups.map((g, gi) => (
+          <span key={gi} className="flex items-center gap-1">
+            {gi > 0 && <span className="px-1 text-on-surface-variant">OR</span>}
+            {g.map((k) => (
+              <Key key={k}>{k}</Key>
+            ))}
+          </span>
+        ))}
+      </span>
+      <span className="text-on-surface-variant">{text}</span>
+    </li>
+  );
+}
+
 export function World({ spawnPath = null, onEnter }: WorldProps) {
   const reduced = usePrefersReducedMotion();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const bubbleRef = useRef<HTMLDivElement>(null);
 
   const input = useRef({ left: false, right: false, run: false });
   const nearRef = useRef<number | null>(null);
+  const talkIdxRef = useRef<number | null>(null);
   const lockRef = useRef(false);
   const enterRef = useRef<(b: Building) => void>(() => {});
 
   const [near, setNear] = useState<number | null>(null);
+  const [talk, setTalk] = useState<{ name: string; line: string } | null>(null);
   const [hasMoved, setHasMoved] = useState(false);
   const [entering, setEntering] = useState<Building | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const [ready, setReady] = useState(false);
+  const [helpOpen, setHelpOpen] = useState(() => {
+    try {
+      return sessionStorage.getItem(HELP_SEEN_KEY) !== "1";
+    } catch {
+      return true;
+    }
+  });
+
+  const helpOpenRef = useRef(helpOpen);
+  helpOpenRef.current = helpOpen;
+
+  const closeHelp = useCallback(() => {
+    setHelpOpen(false);
+    try {
+      sessionStorage.setItem(HELP_SEEN_KEY, "1");
+    } catch {
+      /* storage can be unavailable (private mode); the guide just shows again next visit */
+    }
+  }, []);
+  const closeHelpRef = useRef(closeHelp);
+  closeHelpRef.current = closeHelp;
 
   const enter = useCallback(
     (b: Building) => {
@@ -107,14 +198,14 @@ export function World({ spawnPath = null, onEnter }: WorldProps) {
   );
   enterRef.current = enter;
 
-  // Freeze walking while the fast-travel menu is open or a door transition plays.
+  // Freeze walking while a menu / the guide is open or a door transition plays.
   useEffect(() => {
-    lockRef.current = menuOpen || entering !== null;
+    lockRef.current = menuOpen || helpOpen || entering !== null;
     if (lockRef.current) {
       input.current.left = false;
       input.current.right = false;
     }
-  }, [menuOpen, entering]);
+  }, [menuOpen, helpOpen, entering]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -126,6 +217,8 @@ export function World({ spawnPath = null, onEnter }: WorldProps) {
     let last = 0;
     let cancelled = false;
     let movedFlag = false;
+    let npcs: NpcState[] = [];
+    const lineCounter: Record<string, number> = {};
 
     const spawn = BUILDINGS.find((b) => b.path === spawnPath);
     const st = {
@@ -134,6 +227,9 @@ export function World({ spawnPath = null, onEnter }: WorldProps) {
       walkT: 0,
       time: 0,
       viewW: 384,
+      scale: 1,
+      offX: 0,
+      offY: 0,
     };
 
     const resize = () => {
@@ -143,6 +239,10 @@ export function World({ spawnPath = null, onEnter }: WorldProps) {
       if (canvas.width !== vw) canvas.width = vw;
       canvas.height = WORLD.H;
       st.viewW = vw;
+      // where the canvas actually sits on screen (object-contain), so the DOM bubble can follow an NPC
+      st.scale = Math.min(r.width / vw, r.height / WORLD.H);
+      st.offX = (r.width - vw * st.scale) / 2;
+      st.offY = (r.height - WORLD.H * st.scale) / 2;
     };
     resize();
     const ro = new ResizeObserver(resize);
@@ -152,12 +252,19 @@ export function World({ spawnPath = null, onEnter }: WorldProps) {
     const isButtonTarget = (e: KeyboardEvent) => (e.target as HTMLElement | null)?.closest?.("button") != null;
 
     const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") {
+      const k = e.key.toLowerCase();
+      if (helpOpenRef.current) {
+        if (k === "e" || k === "enter" || k === " " || k === "escape") {
+          e.preventDefault();
+          closeHelpRef.current();
+        }
+        return;
+      }
+      if (k === "escape") {
         setMenuOpen(false);
         return;
       }
       if (lockRef.current) return;
-      const k = e.key.toLowerCase();
       if (k === "arrowleft" || k === "a") {
         input.current.left = true;
         e.preventDefault();
@@ -167,9 +274,7 @@ export function World({ spawnPath = null, onEnter }: WorldProps) {
       } else if (k === "shift") {
         input.current.run = true;
       } else if ((k === "e" || k === "enter" || k === " " || k === "arrowup" || k === "w") && !e.repeat) {
-        if (k === " " || k === "enter") {
-          if (isButtonTarget(e)) return; // let focused buttons behave normally
-        }
+        if ((k === " " || k === "enter") && isButtonTarget(e)) return; // let focused buttons behave normally
         if (nearRef.current !== null) {
           e.preventDefault();
           enterRef.current(BUILDINGS[nearRef.current]);
@@ -200,7 +305,10 @@ export function World({ spawnPath = null, onEnter }: WorldProps) {
       street: streetUrl,
       avatar: avatarUrl,
     };
+    const keys = Object.keys(urls) as (keyof typeof urls)[];
     const imgs = {} as Record<keyof typeof urls, HTMLImageElement>;
+
+    const cameraX = () => clamp(Math.round(st.x - st.viewW / 2), 0, WORLD.W - st.viewW);
 
     const loop = (now: number) => {
       raf = requestAnimationFrame(loop);
@@ -208,6 +316,60 @@ export function World({ spawnPath = null, onEnter }: WorldProps) {
       last = now;
       update(dt);
       draw();
+    };
+
+    const updateNpcs = (dt: number) => {
+      // nearest NPC in talking range
+      let talkIdx: number | null = null;
+      let best = NPC_TALK_RANGE;
+      npcs.forEach((n, i) => {
+        const dist = Math.abs(st.x - n.x);
+        if (dist < best) {
+          best = dist;
+          talkIdx = i;
+        }
+      });
+
+      npcs.forEach((n, i) => {
+        const patrol = !reduced && n.cfg.behavior === "patrol" && n.cfg.range;
+        if (talkIdx === i) {
+          n.moving = false;
+          n.dir = st.x < n.x ? -1 : 1; // turn to face the player
+        } else if (patrol && n.cfg.range) {
+          if (n.pause > 0) {
+            n.pause -= dt;
+            n.moving = false;
+          } else {
+            n.moving = true;
+            const [lo, hi] = n.cfg.range;
+            n.x += n.dir * (n.cfg.speed ?? 25) * dt;
+            if (n.x <= lo) {
+              n.x = lo;
+              n.dir = 1;
+              n.pause = 1 + Math.random() * 1.5;
+            } else if (n.x >= hi) {
+              n.x = hi;
+              n.dir = -1;
+              n.pause = 1 + Math.random() * 1.5;
+            }
+          }
+        } else {
+          n.moving = false;
+        }
+        n.walkT = n.moving ? n.walkT + dt : 0;
+      });
+
+      if (talkIdx !== talkIdxRef.current) {
+        talkIdxRef.current = talkIdx;
+        if (talkIdx === null) {
+          setTalk(null);
+        } else {
+          const n = npcs[talkIdx];
+          const c = ((lineCounter[n.cfg.id] ?? -1) + 1) % n.cfg.lines.length;
+          lineCounter[n.cfg.id] = c;
+          setTalk({ name: n.cfg.name, line: n.cfg.lines[c] });
+        }
+      }
     };
 
     const update = (dt: number) => {
@@ -235,12 +397,41 @@ export function World({ spawnPath = null, onEnter }: WorldProps) {
         nearRef.current = n;
         setNear(n);
       }
+
+      updateNpcs(dt);
+    };
+
+    const drawSprite = (
+      img: HTMLImageElement,
+      sheet: SheetSpec,
+      frame: number,
+      screenX: number,
+      flip: boolean,
+      yOffset = 0,
+    ) => {
+      ctx.fillStyle = "rgba(0,0,0,0.25)";
+      ctx.fillRect(screenX - 11, WORLD.feetY - 1, 22, 3);
+      ctx.save();
+      ctx.translate(screenX, 0);
+      if (flip) ctx.scale(-1, 1);
+      ctx.drawImage(
+        img,
+        frame * sheet.frameW,
+        0,
+        sheet.frameW,
+        sheet.frameH,
+        -sheet.anchorX,
+        WORLD.feetY - sheet.frameH + yOffset,
+        sheet.frameW,
+        sheet.frameH,
+      );
+      ctx.restore();
     };
 
     const draw = () => {
       const vw = st.viewW;
       const H = WORLD.H;
-      const camX = clamp(Math.round(st.x - vw / 2), 0, WORLD.W - vw);
+      const camX = cameraX();
       ctx.imageSmoothingEnabled = false;
       ctx.clearRect(0, 0, vw, H);
 
@@ -276,51 +467,62 @@ export function World({ spawnPath = null, onEnter }: WorldProps) {
         ctx.strokeRect(b.doorX - camX - 22 + 0.5, WORLD.doorTop - 3 + 0.5, 44, WORLD.doorHeight + 4);
       }
 
-      // Player: shadow + the current frame of the walking sprite sheet.
-      const px = Math.round(st.x - camX);
+      // NPCs (only the ones on screen).
+      npcs.forEach((n) => {
+        const sx = Math.round(n.x - camX);
+        if (sx < -40 || sx > vw + 40) return;
+        const frame = n.moving
+          ? n.sheet.walk[Math.floor(n.walkT * n.sheet.fps) % n.sheet.walk.length]
+          : n.sheet.idle;
+        // standing NPCs "breathe" (1px up/down) so they don't look frozen
+        const breathe = !n.moving && !reduced && Math.floor(st.time * 1.5 + n.phase) % 2 === 1 ? -1 : 0;
+        drawSprite(n.img, n.sheet, frame, sx, n.dir > 0, breathe);
+      });
+
+      // Player.
       const moving = st.walkT > 0;
       const frame = moving
         ? AVATAR.walk[Math.floor(st.walkT * AVATAR.fps) % AVATAR.walk.length]
         : AVATAR.idle;
-      const top = WORLD.feetY - AVATAR.frameH;
+      drawSprite(imgs.avatar, AVATAR, frame, Math.round(st.x - camX), st.dir > 0);
 
-      ctx.fillStyle = "rgba(0,0,0,0.25)";
-      ctx.fillRect(px - 11, WORLD.feetY - 1, 22, 3);
-
-      ctx.save();
-      ctx.translate(px, 0);
-      // the artwork faces left, so mirror it when heading right
-      if (st.dir > 0) ctx.scale(-1, 1);
-      ctx.drawImage(
-        imgs.avatar,
-        frame * AVATAR.frameW,
-        0,
-        AVATAR.frameW,
-        AVATAR.frameH,
-        -AVATAR.anchorX,
-        top,
-        AVATAR.frameW,
-        AVATAR.frameH,
-      );
-      ctx.restore();
+      // Keep the DOM speech bubble glued above the NPC being talked to.
+      const bubble = bubbleRef.current;
+      const ti = talkIdxRef.current;
+      if (bubble && ti !== null) {
+        const n = npcs[ti];
+        const sx = st.offX + (n.x - camX) * st.scale;
+        const sy = st.offY + (WORLD.feetY - n.sheet.frameH - 4) * st.scale;
+        bubble.style.transform = `translate(${sx}px, ${sy}px) translate(-50%, -100%)`;
+        bubble.style.visibility = "visible";
+      }
     };
 
-    Promise.all(
-      (Object.keys(urls) as (keyof typeof urls)[]).map(
-        (key) =>
-          new Promise<void>((resolve, reject) => {
-            const im = new Image();
-            im.onload = () => {
-              imgs[key] = im;
-              resolve();
-            };
-            im.onerror = () => reject(new Error(`Failed to load ${key}`));
-            im.src = urls[key];
-          }),
+    Promise.all([
+      Promise.all(keys.map((k) => loadImage(urls[k]))),
+      Promise.all(
+        NPCS.flatMap((cfg) => {
+          const url = npcSheetUrl(cfg.id);
+          return url ? [loadImage(url).then((img) => ({ cfg, img }))] : [];
+        }),
       ),
-    )
-      .then(() => {
+    ])
+      .then(([loaded, npcLoaded]) => {
         if (cancelled) return;
+        keys.forEach((k, i) => {
+          imgs[k] = loaded[i];
+        });
+        npcs = npcLoaded.map(({ cfg, img }) => ({
+          cfg,
+          img,
+          sheet: { ...NPC_SHEET, ...cfg.sheet },
+          x: cfg.x,
+          dir: (cfg.behavior === "patrol" ? 1 : -1) as 1 | -1,
+          walkT: 0,
+          pause: Math.random() * 1.5,
+          phase: Math.random() * 2,
+          moving: false,
+        }));
         setReady(true);
         raf = requestAnimationFrame(loop);
       })
@@ -354,6 +556,23 @@ export function World({ spawnPath = null, onEnter }: WorldProps) {
         </div>
       )}
 
+      {/* NPC speech bubble (thought-bubble style, follows the NPC) */}
+      {talk && (
+        <div
+          ref={bubbleRef}
+          style={{ visibility: "hidden" }}
+          className="pointer-events-none absolute left-0 top-0 z-[55] flex flex-col items-center"
+        >
+          <div className="max-w-[220px] border-[4px] border-[#082f49] bg-[#fdfdf5] px-3 py-2 shadow-[4px_4px_0_0_#020617]">
+            <p className="mb-1 font-label-sm text-label-sm text-[#b3262e]">{talk.name}</p>
+            <p className="font-label-sm text-label-sm leading-relaxed text-[#082f49]">{talk.line}</p>
+          </div>
+          <span className="-translate-x-3 mt-1 block h-3 w-3 border-[3px] border-[#082f49] bg-[#fdfdf5]" />
+          <span className="-translate-x-6 mt-1 block h-2 w-2 border-2 border-[#082f49] bg-[#fdfdf5]" />
+          <span className="-translate-x-9 mt-1 block h-1 w-1 bg-[#082f49]" />
+        </div>
+      )}
+
       {/* HUD: where am I */}
       <div className="pointer-events-none absolute left-3 top-3 border-[4px] border-primary bg-surface-container-high/90 px-3 py-2 shadow-[4px_4px_0_0_#020617]">
         <p className="font-label-sm text-label-sm text-primary">▶ PORTOPIXEL CITY</p>
@@ -362,16 +581,26 @@ export function World({ spawnPath = null, onEnter }: WorldProps) {
         </p>
       </div>
 
-      {/* HUD: fast travel (for people in a hurry, and keyboard-only users) */}
+      {/* HUD: help + fast travel (for people in a hurry, and keyboard-only users) */}
       <div className="absolute right-3 top-3 z-[60] flex flex-col items-end gap-2">
-        <PixelButton
-          variant="secondary"
-          onClick={() => setMenuOpen((o) => !o)}
-          aria-expanded={menuOpen}
-          className="px-3 py-2 text-label-sm font-label-sm"
-        >
-          {menuOpen ? "[ X ] CLOSE" : "FAST TRAVEL ▶"}
-        </PixelButton>
+        <div className="flex gap-2">
+          <PixelButton
+            variant="ghost"
+            onClick={() => setHelpOpen(true)}
+            aria-label="How to play"
+            className="px-3 py-2 text-label-sm font-label-sm"
+          >
+            ? HELP
+          </PixelButton>
+          <PixelButton
+            variant="secondary"
+            onClick={() => setMenuOpen((o) => !o)}
+            aria-expanded={menuOpen}
+            className="px-3 py-2 text-label-sm font-label-sm"
+          >
+            {menuOpen ? "[ X ] CLOSE" : "FAST TRAVEL ▶"}
+          </PixelButton>
+        </div>
         {menuOpen && (
           <ul className="flex flex-col gap-2 border-[4px] border-primary bg-surface-container-high p-2 shadow-[6px_6px_0_0_#020617]">
             {BUILDINGS.map((b, i) => (
@@ -401,7 +630,8 @@ export function World({ spawnPath = null, onEnter }: WorldProps) {
             ▶ PRESS E TO ENTER: {nearBuilding.label}
           </button>
         ) : (
-          !hasMoved && (
+          !hasMoved &&
+          !helpOpen && (
             <p className="max-w-sm bg-background/80 px-3 py-2 text-center font-label-sm text-label-sm leading-relaxed text-on-surface">
               A / D OR ◀ ▶ TO WALK · SHIFT = RUN
             </p>
@@ -434,6 +664,38 @@ export function World({ spawnPath = null, onEnter }: WorldProps) {
           </button>
         </div>
       </div>
+
+      {/* How to play */}
+      {helpOpen && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="help-title"
+          className="absolute inset-0 z-[65] flex items-center justify-center overflow-y-auto bg-background/80 p-4"
+        >
+          <div className="w-full max-w-lg border-[6px] border-primary bg-surface-container p-5 shadow-[10px_10px_0_0_#020617]">
+            <h2 id="help-title" className="mb-5 font-headline-md text-headline-md text-primary">
+              ▶ HOW TO PLAY
+            </h2>
+            <ul className="mb-6 flex flex-col gap-4 font-label-sm text-label-sm leading-relaxed text-on-surface">
+              <HelpRow groups={[["A", "D"], ["◀", "▶"]]} text="WALK LEFT / RIGHT" />
+              <HelpRow groups={[["SHIFT"]]} text="HOLD TO RUN" />
+              <HelpRow groups={[["E"], ["ENTER"], ["↑"]]} text="ENTER A BUILDING (WHEN ITS DOOR BLINKS)" />
+              <li className="text-on-surface-variant">▶ WALK UP TO PEOPLE TO TALK TO THEM</li>
+              <li className="text-on-surface-variant">▶ ON A PHONE USE THE ◀ ▶ RUN AND A BUTTONS</li>
+              <li className="text-on-surface-variant">▶ IN A HURRY? USE FAST TRAVEL (TOP RIGHT)</li>
+            </ul>
+            <PixelButton
+              variant="primary"
+              autoFocus
+              onClick={closeHelp}
+              className="px-4 py-3 text-label-sm font-label-sm"
+            >
+              [ START EXPLORING ]
+            </PixelButton>
+          </div>
+        </div>
+      )}
 
       {entering && <PixelCover />}
     </div>

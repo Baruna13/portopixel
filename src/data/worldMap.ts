@@ -55,3 +55,87 @@ export const AVATAR = {
   walk: [1, 2, 3, 4, 5], // frames looped while walking
   fps: 10, // walk animation speed (run is 1.6x faster)
 } as const;
+
+/* ------------------------------------------------------------------ NPCs */
+
+export interface SheetSpec {
+  frameW: number;
+  frameH: number;
+  anchorX: number;
+  idle: number;
+  walk: readonly number[];
+  fps: number;
+}
+
+/** Default layout of an NPC sprite sheet: [idle, walk1, walk2, walk3, walk4], artwork facing LEFT. */
+export const NPC_SHEET: SheetSpec = { frameW: 31, frameH: 60, anchorX: 13, idle: 0, walk: [1, 2, 3, 4], fps: 6 };
+
+export interface Npc {
+  /** Sprite sheet is read from src/assets/npcs/<id>.png (NPCs without a file are skipped). */
+  id: string;
+  name: string;
+  x: number;
+  /** "idle" stands still, "patrol" walks back and forth inside `range`. */
+  behavior: "idle" | "patrol";
+  range?: [number, number];
+  speed?: number; // logical px / second
+  lines: string[];
+  /** Only needed if this NPC's sheet has a different layout than NPC_SHEET. */
+  sheet?: Partial<SheetSpec>;
+}
+
+/** How close (logical px) the player must be for an NPC to stop and talk. */
+export const NPC_TALK_RANGE = 40;
+
+/**
+ * The city's NPCs. Each sprite sheet lives in src/assets/npcs/<id>.png.
+ * To change what someone says, edit `lines`. To move them, change `x` (or `range` for walkers).
+ * `sheet` tells the engine the frame size of that person's sheet (frames in a row:
+ * idle, 4 walking frames, idle).
+ */
+export const NPCS: Npc[] = [
+  {
+    id: "nayla",
+    name: "NAYLA",
+    x: 235,
+    behavior: "idle",
+    sheet: { frameW: 31, frameH: 56, anchorX: 15 },
+    lines: ["HI! I'M NAYLA. WELCOME TO THE CITY.", "EVERY DOOR ON THIS STREET LEADS SOMEWHERE."],
+  },
+  {
+    id: "choirun",
+    name: "CHOIRUN",
+    x: 600,
+    behavior: "patrol",
+    range: [540, 780],
+    speed: 28,
+    sheet: { frameW: 32, frameH: 56, anchorX: 14 },
+    lines: ["HEY, I'M CHOIRUN. CHECK OUT THE MISSIONS!", "THE STORE WITH THE STRIPES IS WORTH A VISIT."],
+  },
+  {
+    id: "daper",
+    name: "DAPER",
+    x: 830,
+    behavior: "idle",
+    sheet: { frameW: 32, frameH: 58, anchorX: 14 },
+    lines: ["DAPER HERE. NICE DAY FOR A WALK, RIGHT?", "TRY HOLDING SHIFT TO RUN."],
+  },
+  {
+    id: "farel",
+    name: "FAREL",
+    x: 1120,
+    behavior: "patrol",
+    range: [1060, 1290],
+    speed: 24,
+    sheet: { frameW: 34, frameH: 60, anchorX: 14 },
+    lines: ["I'M FAREL. LOOKING FOR THE TROPHY HALL?", "KEEP WALKING RIGHT!"],
+  },
+  {
+    id: "pria-solo",
+    name: "PRIA SOLO",
+    x: 1790,
+    behavior: "idle",
+    sheet: { frameW: 31, frameH: 58, anchorX: 15 },
+    lines: ["WELCOME! YOU MADE IT TO THE END OF THE STREET.", "THE POST OFFICE IS BEHIND YOU."],
+  },
+];
