@@ -130,3 +130,14 @@
     transform: translateX(-4px);
   }
 }
+
+/* Music button equalizer bars. */
+@keyframes eq {
+  0%,
+  100% {
+    height: 3px;
+  }
+  50% {
+    height: 12px;
+  }
+}

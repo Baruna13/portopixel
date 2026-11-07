@@ -15,6 +15,7 @@ import {
 } from "@/data/worldMap";
 import { usePrefersReducedMotion } from "@/hooks/useMediaQuery";
 import { PixelButton } from "@/components/ui/PixelButton";
+import { MusicButton, MusicCredit } from "@/components/ui/MusicButton";
 import skyUrl from "@/assets/world/sky.png";
 import cloudsUrl from "@/assets/world/clouds.png";
 import farUrl from "@/assets/world/far.png";
@@ -601,6 +602,7 @@ export function World({ spawnPath = null, onEnter }: WorldProps) {
             {menuOpen ? "[ X ] CLOSE" : "FAST TRAVEL ▶"}
           </PixelButton>
         </div>
+        <MusicButton />
         {menuOpen && (
           <ul className="flex flex-col gap-2 border-[4px] border-primary bg-surface-container-high p-2 shadow-[6px_6px_0_0_#020617]">
             {BUILDINGS.map((b, i) => (
@@ -685,6 +687,7 @@ export function World({ spawnPath = null, onEnter }: WorldProps) {
               <li className="text-on-surface-variant">▶ ON A PHONE USE THE ◀ ▶ RUN AND A BUTTONS</li>
               <li className="text-on-surface-variant">▶ IN A HURRY? USE FAST TRAVEL (TOP RIGHT)</li>
             </ul>
+            <MusicCredit className="mb-4 font-label-sm text-label-sm text-on-surface-variant" />
             <PixelButton
               variant="primary"
               autoFocus

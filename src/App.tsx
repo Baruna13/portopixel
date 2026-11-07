@@ -1,4 +1,6 @@
+import { useEffect } from "react";
 import { AnimatePresence } from "framer-motion";
+import { music } from "@/lib/music";
 import { useGameNavigation } from "@/hooks/useGameNavigation";
 import { PROJECTS } from "@/data/projects";
 import { PageShell } from "@/components/layout/PageShell";
@@ -27,6 +29,17 @@ export default function App() {
     returnToWorld,
   } = useGameNavigation();
 
+  // Browsers only allow audio after a user gesture: start the music on the first click / key press.
+  useEffect(() => {
+    const go = () => music.start();
+    window.addEventListener("pointerdown", go);
+    window.addEventListener("keydown", go);
+    return () => {
+      window.removeEventListener("pointerdown", go);
+      window.removeEventListener("keydown", go);
+    };
+  }, []);
+
   if (!hasStarted) {
     // ScrollIntro renders the existing <Hero /> as its last scene.
     return <ScrollIntro onStart={start} />;
@@ -51,7 +64,7 @@ export default function App() {
             ) : (
               <Projects onOpenProject={openProject} />
             ))}
-          {activePath === "inventory" && <Skills />}
+          {activePath === "inventory" && <Skills onOpenProject={openProject} />}
           {activePath === "trophies" && <Achievements />}
           {activePath === "contact" && <Contact />}
         </GameTransition>
