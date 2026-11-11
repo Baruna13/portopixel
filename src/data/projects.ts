@@ -1,8 +1,12 @@
 import type { Project } from "@/types";
 
 /**
- * Keep project details factual; only add metrics, outcomes, and links when
- * they are confirmed. Trisis GYM Web and Mobile are separate projects.
+ * Project data kept in line with the CV. Do NOT add stats, results, client
+ * names, user counts, or repo/live URLs unless explicitly confirmed — leave
+ * the optional fields unset instead.
+ *
+ * Trisis GYM is ONE entry: the finished version is the Electron app.
+ * Screenshots go in src/assets/projects/<id>/ (e.g. .../trisis-gym/1.png).
  */
 export const PROJECTS: Project[] = [
   {
@@ -22,7 +26,6 @@ export const PROJECTS: Project[] = [
       "Community verification",
       "Authentication and authorization",
     ],
-    liveUrl: "https://akseskota.vercel.app",
   },
   {
     id: "riecharge",
@@ -30,8 +33,7 @@ export const PROJECTS: Project[] = [
     title: "Rie.Charge — Juice E-commerce Website",
     role: "Backend Developer",
     status: "Completed",
-    purpose:
-      "An e-commerce website for browsing and ordering fresh juices, fitshots, and other healthy products.",
+    purpose: "An e-commerce website for browsing and ordering fresh juices, fitshots, and other healthy products.",
     tech: ["Laravel", "PHP", "MySQL", "REST API"],
     features: [
       "Product catalog with category filters",
@@ -43,14 +45,23 @@ export const PROJECTS: Project[] = [
     liveUrl: "https://riecharge.infinityfreeapp.com/index.php",
   },
   {
-    id: "trisis-gym-web",
+    id: "re-food",
     missionNumber: 3,
-    title: "Trisis GYM — Web Application",
-    role: "Backend Developer",
+    title: "RE-FOOD",
+    role: "Fullstack Developer",
     status: "Completed",
-    purpose:
-      "Member management and attendance system for a gym, built as a web application.",
-    tech: ["Laravel", "PHP", "MySQL", "REST API"],
+    purpose: "A food donation platform designed to connect food donors with recipients and support food redistribution.",
+    tech: ["Flutter", "Laravel", "MongoDB", "Google Maps API", "REST API"],
+    features: ["Food donation distribution", "Live tracking of volunteers"],
+  },
+  {
+    id: "trisis-gym",
+    missionNumber: 4,
+    title: "Trisis GYM",
+    role: "Developer",
+    status: "Completed",
+    purpose: "A desktop application for gym member management and attendance, built for a client.",
+    tech: ["Electron", "PHP"],
     features: [
       "Member management",
       "QR-based attendance",
@@ -61,48 +72,21 @@ export const PROJECTS: Project[] = [
     ],
   },
   {
-    id: "trisis-gym-mobile",
-    missionNumber: 4,
-    title: "Trisis GYM — Mobile Application",
-    role: "Backend Developer",
-    status: "Completed",
-    purpose:
-      "Mobile companion application for gym member data, attendance, and visit management.",
-    tech: ["React Native", "Laravel", "PHP", "MySQL", "REST API"],
-    features: [
-      "Member data",
-      "Attendance",
-      "Visit management",
-      "Backend API integration",
-      "Authentication",
-    ],
-  },
-  {
     id: "perpustakaan",
     missionNumber: 5,
     title: "Perpustakaan",
     role: "Fullstack Developer",
     status: "Completed",
-    purpose: "A library management system with a public site and admin dashboard.",
+    purpose:
+      "A library book-lending information system for Pondok Pesantren Darud Da'wah Wal Irsyad (DDI) Mangkoso.",
     tech: ["Laravel", "PHP", "MySQL", "HTML", "CSS", "JavaScript"],
     features: [
-      "Library management",
-      "Member management",
-      "Book data management",
+      "Member data management",
+      "Book borrowing and returns",
+      "Fines",
+      "Reports",
       "Public library website",
       "Admin dashboard",
-      "Database management",
     ],
-  },
-  {
-    id: "re-food",
-    missionNumber: 6,
-    title: "RE-FOOD",
-    role: "Fullstack Developer",
-    status: "Completed",
-    purpose:
-      "A food donation platform designed to connect food donors with recipients and support food redistribution.",
-    tech: ["Laravel", "React", "HTML", "CSS", "JavaScript"],
-    features: [],
   },
 ];

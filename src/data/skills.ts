@@ -15,6 +15,7 @@ export const SKILLS: Skill[] = [
   // FRONTEND
   { name: "React", category: "FRONTEND" },
   { name: "React Native", category: "FRONTEND" },
+  { name: "Flutter", category: "FRONTEND" },
   { name: "HTML", category: "FRONTEND" },
   { name: "CSS", category: "FRONTEND" },
   { name: "JavaScript", category: "FRONTEND" },
@@ -23,10 +24,11 @@ export const SKILLS: Skill[] = [
   { name: "MySQL", category: "DATABASE" },
   { name: "Prisma", category: "DATABASE" },
   { name: "MongoDB", category: "DATABASE" },
-  { name: "Supabase", category: "DATABASE" },
 
   // OTHER
   { name: "REST API", category: "OTHER" },
+  { name: "Electron", category: "OTHER" },
+  { name: "Google Maps API", category: "OTHER" },
   { name: "JWT", category: "OTHER" },
   { name: "Cloudinary", category: "OTHER" },
   { name: "Git", category: "OTHER" },

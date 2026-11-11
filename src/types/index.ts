@@ -9,7 +9,7 @@
 
 export type ProjectRole =
   | "Backend Developer"
-  | "Fullstack Developer";
+  | "Fullstack Developer" | "Developer";
 
 export type ProjectStatus = "Completed";
 

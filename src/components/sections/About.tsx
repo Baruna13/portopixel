@@ -56,7 +56,7 @@ export function About() {
 function ProfileRow({ label, value }: { label: string; value: string }) {
   return (
     <div className="grid grid-cols-1 sm:grid-cols-[140px_1fr] gap-2 items-start">
-      <div className="font-headline-md text-headline-md text-surface-variant flex items-center h-full">{label}</div>
+      <div className="font-headline-md text-headline-md text-surface-tint flex items-center h-full">{label}</div>
       <div className="font-body-lg text-body-lg text-on-surface bg-surface-container p-3 border-l-[4px] border-primary">
         <Typewriter text={value} />
       </div>

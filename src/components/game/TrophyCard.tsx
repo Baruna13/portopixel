@@ -38,20 +38,20 @@ function LockedCard({ achievement }: { achievement: Achievement }) {
       </span>
       <span className="flex items-center gap-4">
         <span className="flex h-20 w-20 shrink-0 items-center justify-center border-[4px] border-surface-variant bg-surface">
-          <span aria-hidden="true" className="font-headline-xl text-headline-xl text-surface-variant">
+          <span aria-hidden="true" className="font-headline-xl text-headline-xl text-outline-variant">
             ?
           </span>
         </span>
         <span className="flex flex-col gap-2">
           <span className="font-headline-md text-headline-md text-on-surface-variant">{achievement.title}</span>
-          <span className="font-label-sm text-label-sm uppercase text-surface-variant">Classified</span>
+          <span className="font-label-sm text-label-sm uppercase text-on-surface-variant">Classified</span>
         </span>
       </span>
       <span
         aria-live="polite"
         className={cn(
           "flex items-center justify-center border-2 bg-surface p-3 font-label-sm text-label-sm",
-          denied ? "border-error text-error" : "border-surface-variant text-surface-variant",
+          denied ? "border-error text-error" : "border-surface-variant text-on-surface-variant",
         )}
       >
         {denied ? "ACCESS DENIED — KEEP LEVELING" : "COMING SOON..."}

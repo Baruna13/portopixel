@@ -184,10 +184,12 @@ export function World({ spawnPath = null, onEnter }: WorldProps) {
   const closeHelpRef = useRef(closeHelp);
   closeHelpRef.current = closeHelp;
 
+  const enteringRef = useRef(false);
   const enter = useCallback(
     (b: Building) => {
-      if (lockRef.current) return;
-      lockRef.current = true;
+      if (enteringRef.current) return; // a door transition is already playing
+      enteringRef.current = true;
+      setMenuOpen(false);
       if (reduced) {
         onEnter(b.path);
         return;
@@ -243,7 +245,7 @@ export function World({ spawnPath = null, onEnter }: WorldProps) {
       // where the canvas actually sits on screen (object-contain), so the DOM bubble can follow an NPC
       st.scale = Math.min(r.width / vw, r.height / WORLD.H);
       st.offX = (r.width - vw * st.scale) / 2;
-      st.offY = (r.height - WORLD.H * st.scale) / 2;
+      st.offY = 0; // the canvas is top-aligned (object-top)
     };
     resize();
     const ro = new ResizeObserver(resize);
@@ -543,12 +545,12 @@ export function World({ spawnPath = null, onEnter }: WorldProps) {
   const nearBuilding = near !== null ? BUILDINGS[near] : null;
 
   return (
-    <div ref={containerRef} className="fixed inset-0 z-40 overflow-hidden bg-black">
+    <div ref={containerRef} className="fixed inset-0 z-40 select-none overflow-hidden bg-black [-webkit-tap-highlight-color:transparent]">
       <canvas
         ref={canvasRef}
         role="img"
         aria-label="Interactive city map. Walk with the arrow keys or A and D, run with Shift, and press E at a door to enter a building."
-        className="block h-full w-full object-contain [image-rendering:pixelated]"
+        className="block h-full w-full object-contain object-top [image-rendering:pixelated]"
       />
 
       {!ready && (
@@ -575,7 +577,7 @@ export function World({ spawnPath = null, onEnter }: WorldProps) {
       )}
 
       {/* HUD: where am I */}
-      <div className="pointer-events-none absolute left-3 top-3 border-[4px] border-primary bg-surface-container-high/90 px-3 py-2 shadow-[4px_4px_0_0_#020617]">
+      <div className="pointer-events-none absolute left-3 top-3 hidden border-[4px] border-primary bg-surface-container-high/90 px-3 py-2 shadow-[4px_4px_0_0_#020617] sm:block">
         <p className="font-label-sm text-label-sm text-primary">▶ PORTOPIXEL CITY</p>
         <p className="mt-1 font-label-sm text-label-sm text-on-surface-variant">
           {nearBuilding ? nearBuilding.hint : "MAIN STREET"}
@@ -591,7 +593,7 @@ export function World({ spawnPath = null, onEnter }: WorldProps) {
             aria-label="How to play"
             className="px-3 py-2 text-label-sm font-label-sm"
           >
-            ? HELP
+            ?<span className="hidden sm:inline"> HELP</span>
           </PixelButton>
           <PixelButton
             variant="secondary"
@@ -599,7 +601,14 @@ export function World({ spawnPath = null, onEnter }: WorldProps) {
             aria-expanded={menuOpen}
             className="px-3 py-2 text-label-sm font-label-sm"
           >
-            {menuOpen ? "[ X ] CLOSE" : "FAST TRAVEL ▶"}
+            {menuOpen ? (
+              "[ X ] CLOSE"
+            ) : (
+              <>
+                <span className="sm:hidden">MENU ▶</span>
+                <span className="hidden sm:inline">FAST TRAVEL ▶</span>
+              </>
+            )}
           </PixelButton>
         </div>
         <MusicButton />
@@ -629,7 +638,8 @@ export function World({ spawnPath = null, onEnter }: WorldProps) {
             onClick={() => enter(nearBuilding)}
             className="border-[4px] border-secondary bg-surface-container-high px-4 py-3 font-label-sm text-label-sm text-secondary shadow-[4px_4px_0_0_#020617] cursor-blink"
           >
-            ▶ PRESS E TO ENTER: {nearBuilding.label}
+            ▶ <span className="max-md:hidden">PRESS E TO ENTER</span>
+            <span className="md:hidden">TAP TO ENTER</span>: {nearBuilding.label}
           </button>
         ) : (
           !hasMoved &&
@@ -642,7 +652,7 @@ export function World({ spawnPath = null, onEnter }: WorldProps) {
       </div>
 
       {/* Touch controls */}
-      <div className="absolute inset-x-0 bottom-4 hidden items-end justify-between px-4 max-md:flex [@media(pointer:coarse)]:flex">
+      <div className="absolute inset-x-0 bottom-0 hidden items-end justify-between px-4 pb-[max(1rem,env(safe-area-inset-bottom))] max-md:flex [@media(pointer:coarse)]:flex">
         <div className="flex gap-3">
           <HoldButton label="Walk left" onHold={(d) => (input.current.left = d)} className="h-16 w-16">
             ◀

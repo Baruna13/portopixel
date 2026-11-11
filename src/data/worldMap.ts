@@ -13,7 +13,7 @@ export const WORLD = {
   W: 2000, // world width (logical px)
   feetY: 178, // y where the avatar's feet stand (on the sidewalk)
   spawnX: 110, // starting x on a fresh visit
-  minView: 230, // narrowest visible slice (portrait phones)
+  minView: 150, // narrowest visible slice (portrait phones)
   maxView: 480, // widest visible slice (ultra-wide screens)
   doorTop: 94,
   doorHeight: 64,

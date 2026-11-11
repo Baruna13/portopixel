@@ -16,12 +16,14 @@ const url: string | undefined = Object.values(tracks)[0];
 
 export const MUSIC_CREDIT = "NIGHT SHADE — ADHESIVEWOMBAT";
 const STORAGE_KEY = "portopixel-music";
-const VOLUME = 0.35;
+const VOLUME_KEY = "portopixel-volume";
+const DEFAULT_VOLUME = 0.12; // quiet by default; players can raise it with the slider
 
 interface MusicState {
   available: boolean;
   muted: boolean;
   playing: boolean;
+  volume: number; // 0..1
 }
 
 let audio: HTMLAudioElement | null = null;
@@ -34,11 +36,20 @@ let muted = (() => {
   }
 })();
 
+let volume = (() => {
+  try {
+    const saved = Number(localStorage.getItem(VOLUME_KEY));
+    return localStorage.getItem(VOLUME_KEY) !== null && Number.isFinite(saved) ? Math.min(1, Math.max(0, saved)) : DEFAULT_VOLUME;
+  } catch {
+    return DEFAULT_VOLUME;
+  }
+})();
+
 const listeners = new Set<() => void>();
-let snapshot: MusicState = { available: Boolean(url), muted, playing: false };
+let snapshot: MusicState = { available: Boolean(url), muted, playing: false, volume };
 
 function emit() {
-  snapshot = { available: Boolean(url), muted, playing: audio !== null && !audio.paused };
+  snapshot = { available: Boolean(url), muted, playing: audio !== null && !audio.paused, volume };
   listeners.forEach((l) => l());
 }
 
@@ -47,7 +58,7 @@ function ensureAudio(): HTMLAudioElement | null {
   if (!audio) {
     audio = new Audio(url);
     audio.loop = true;
-    audio.volume = VOLUME;
+    audio.volume = volume;
     audio.preload = "auto";
     audio.addEventListener("play", emit);
     audio.addEventListener("pause", emit);
@@ -65,6 +76,16 @@ if (typeof document !== "undefined") {
 }
 
 export const music = {
+  setVolume(v: number) {
+    volume = Math.min(1, Math.max(0, v));
+    if (audio) audio.volume = volume;
+    try {
+      localStorage.setItem(VOLUME_KEY, String(volume));
+    } catch {
+      /* ignore */
+    }
+    emit();
+  },
   /** Call from a user gesture. Safe to call many times. */
   start() {
     const a = ensureAudio();

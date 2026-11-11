@@ -2,6 +2,53 @@ import { Github, Linkedin, Mail, FileText, Swords, type LucideIcon } from "lucid
 import { SOCIAL_LINKS } from "@/data/social";
 import { cn } from "@/lib/utils";
 
+/**
+ * The CV is picked up automatically: export it from Word as PDF and drop it into
+ * src/assets/cv/ (any file name). Until a PDF exists the tile shows COMING SOON.
+ * (A link in SOCIAL_LINKS.resumeUrl, e.g. Google Drive, also works as a fallback.)
+ */
+const cvFiles = import.meta.glob("../../assets/cv/*.pdf", {
+  eager: true,
+  query: "?url",
+  import: "default",
+}) as Record<string, string>;
+const CV_URL: string | undefined = Object.values(cvFiles)[0] ?? SOCIAL_LINKS.resumeUrl;
+const CV_DOWNLOAD_NAME = "CV-Mochamad-Emil-Baruna-Amirudin.pdf";
+
+const cvActionClass = cn(
+  "border-2 border-primary bg-surface px-3 py-2 font-label-sm text-label-sm text-primary transition-colors",
+  "hover:bg-primary hover:text-on-primary focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/60",
+);
+
+function CvTile({ url }: { url?: string }) {
+  const ready = Boolean(url);
+  return (
+    <div
+      className={cn(
+        "relative flex w-full flex-wrap items-center justify-between gap-4 border-[4px] border-primary bg-surface-container-low p-4 shadow-[4px_4px_0_0_#7dd3fc] md:p-6",
+        !ready && "opacity-40",
+      )}
+    >
+      <div className="flex items-center gap-4">
+        <FileText aria-hidden="true" className="h-6 w-6 shrink-0 text-primary" />
+        <span className="font-headline-md text-headline-md text-on-surface-variant">CV</span>
+      </div>
+      {ready ? (
+        <div className="flex gap-2">
+          <a href={url} target="_blank" rel="noreferrer" className={cvActionClass}>
+            VIEW
+          </a>
+          <a href={url} download={CV_DOWNLOAD_NAME} className={cvActionClass}>
+            DOWNLOAD
+          </a>
+        </div>
+      ) : (
+        <span className="font-label-sm text-label-sm uppercase text-on-surface-variant">COMING SOON</span>
+      )}
+    </div>
+  );
+}
+
 interface ContactLinkDef {
   key: string;
   label: string;
@@ -21,7 +68,6 @@ export function Contact() {
       icon: Mail,
       href: SOCIAL_LINKS.email ? `mailto:${SOCIAL_LINKS.email}` : undefined,
     },
-    { key: "resume", label: "RESUME", meta: "CHARACTER SHEET", icon: FileText, href: SOCIAL_LINKS.resumeUrl },
   ];
 
   return (
@@ -60,12 +106,13 @@ export function Contact() {
                   {label}
                 </span>
               </div>
-              <span className="font-label-sm text-label-sm text-surface-variant group-hover:text-on-primary uppercase hidden sm:inline">
+              <span className="font-label-sm text-label-sm text-on-surface-variant group-hover:text-on-primary uppercase hidden sm:inline">
                 {disabled ? "COMING SOON" : meta}
               </span>
             </a>
           );
         })}
+        <CvTile url={CV_URL} />
       </div>
 
       <div className="w-full flex justify-center mt-4">
