@@ -45,6 +45,7 @@ export function About() {
             <ProfileRow label="CLASS" value={PLAYER_PROFILE.class} />
             <ProfileRow label="ROLES" value={PLAYER_PROFILE.roles.join(", ")} />
             <ProfileRow label="FOCUS" value={PLAYER_PROFILE.focus.join(", ")} />
+            {PLAYER_PROFILE.education && <ProfileRow label="EDU." value={PLAYER_PROFILE.education} />}
             {PLAYER_PROFILE.location && <ProfileRow label="LOC." value={PLAYER_PROFILE.location} />}
           </div>
         </div>

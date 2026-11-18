@@ -7,9 +7,7 @@
  * such fields "for flexibility" — see ARCHITECTURE.md §6, §16, §28.
  */
 
-export type ProjectRole =
-  | "Backend Developer"
-  | "Fullstack Developer" | "Developer";
+export type ProjectRole = "Backend Developer" | "Fullstack Developer" | "Project Manager";
 
 export type ProjectStatus = "Completed";
 
@@ -80,6 +78,8 @@ export interface PlayerProfile {
   focus: string[];
   /** Optional — only set when explicitly confirmed. See ARCHITECTURE.md §25. */
   location?: string;
+  /** Optional — only set when explicitly confirmed. */
+  education?: string;
   /**
    * Optional portrait image, imported from src/assets/.
    * When unset, the UI falls back to a generic icon placeholder.

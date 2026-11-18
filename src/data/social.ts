@@ -1,14 +1,13 @@
 import type { SocialLinks } from "@/types";
 
 /**
- * Replace these placeholder values with real links when available.
- * Leave a field `undefined` (delete the line) rather than filling it
- * with a fake URL if you don't have one yet — components should render
- * a disabled/omitted state for missing links, not a dead link.
+ * Real values from the CV. LinkedIn is left undefined on purpose: the CV only
+ * has the display name, not the profile URL. Add the full URL
+ * (https://www.linkedin.com/in/...) and the tile turns on by itself.
  */
 export const SOCIAL_LINKS: SocialLinks = {
-  github: "https://github.com/",
-  linkedin: "https://linkedin.com/",
+  github: "https://github.com/Baruna13",
+  linkedin: undefined,
   email: "mochamademilbaruna@gmail.com",
-  resumeUrl: undefined,
+  resumeUrl: undefined, // the CV PDF in src/assets/cv/ is picked up automatically
 };

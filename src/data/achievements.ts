@@ -1,10 +1,10 @@
 import type { Achievement } from "@/types";
 
 /**
- * Two verified achievements exist. The 2 locked "coming soon" slots are
- * decorative placeholders for the trophy-cabinet UI pattern, per explicit
- * instruction — they carry no real content and must never be filled with
- * invented achievements.
+ * Verified achievements only (TIC 9.0 and the Gemini certification are on the CV).
+ * The locked "coming soon" slot is a decorative placeholder for the trophy-cabinet
+ * UI pattern, per explicit instruction — it carries no real content and must
+ * never be filled with an invented achievement.
  *
  * Certificate images: src/assets/certificates/<achievement-id>/1.png
  */
@@ -29,6 +29,11 @@ export const ACHIEVEMENTS: Achievement[] = [
     description:
       "Technology Innovative Challenge 9.0, Web Development category, with AksesKota. Theme: \"Push the Impact: Web Innovation for Sustainable Development Goals.\"",
   },
+  {
+    id: "gemini-certified-university-student",
+    status: "Unlocked",
+    title: "Gemini Certified University Student",
+    date: "2026 - 2029",
+  },
   { id: "locked-1", status: "Locked", title: "???" },
-  { id: "locked-2", status: "Locked", title: "???" },
 ];
