@@ -172,6 +172,17 @@ export function TrophyModal({ items, activeId, onChange, onClose }: TrophyModalP
           </div>
         )}
 
+        {achievement.credentialUrl && (
+          <a
+            href={achievement.credentialUrl}
+            target="_blank"
+            rel="noreferrer"
+            className="inline-flex w-fit items-center border-[4px] border-primary bg-surface-variant px-3 py-2 font-label-sm text-label-sm uppercase text-primary shadow-[4px_4px_0_0_#020617] transition-colors hover:bg-primary hover:text-on-primary focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/60"
+          >
+            Verify credential ↗
+          </a>
+        )}
+
         {items.length > 1 && (
           <div className="flex items-center justify-between gap-4">
             <PixelButton variant="secondary" onClick={() => go(-1)} className="px-3 py-2 text-label-sm font-label-sm">

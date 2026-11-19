@@ -33,7 +33,11 @@ export const ACHIEVEMENTS: Achievement[] = [
     id: "gemini-certified-university-student",
     status: "Unlocked",
     title: "Gemini Certified University Student",
-    date: "2026 - 2029",
+    organizer: "Google for Education",
+    date: "24 Sep 2026 - 24 Sep 2029",
+    description:
+      "Awarded for demonstrating the knowledge, skills, and basic competencies needed to use Google AI.",
+    credentialUrl: "https://edu.google.accredible.com/8e8da724-d67c-4ad9-baaa-04619447f19b#acc.7LTCGspg",
   },
   { id: "locked-1", status: "Locked", title: "???" },
 ];

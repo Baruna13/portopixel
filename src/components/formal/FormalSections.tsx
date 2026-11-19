@@ -216,7 +216,7 @@ export function EducationSection() {
 
 /* -------------------------------------------------------------- achievements */
 
-function AchievementCard({ id, title, subtitle, rank, organizer, date, description }: (typeof ACHIEVEMENTS)[number]) {
+function AchievementCard({ id, title, subtitle, rank, organizer, date, description, credentialUrl }: (typeof ACHIEVEMENTS)[number]) {
   const [viewer, setViewer] = useState(false);
   const images = getCertificateImages(id);
   const preview = images[0];
@@ -251,6 +251,12 @@ function AchievementCard({ id, title, subtitle, rank, organizer, date, descripti
         <p className="font-inter text-sm leading-6 text-on-surface-variant">
           Organizer: <span className="text-on-surface">{organizer}</span>
         </p>
+      )}
+
+      {credentialUrl && (
+        <a href={credentialUrl} target="_blank" rel="noreferrer" className={cn(btn.secondary, "w-fit px-3 py-2")}>
+          Verify credential ↗
+        </a>
       )}
 
       {viewer && <Lightbox images={images} title={title} onClose={() => setViewer(false)} />}
