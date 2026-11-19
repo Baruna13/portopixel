@@ -28,6 +28,7 @@ interface MusicState {
 
 let audio: HTMLAudioElement | null = null;
 let started = false;
+let suspended = false; // true while the formal portfolio is shown: no music there
 let muted = (() => {
   try {
     return localStorage.getItem(STORAGE_KEY) === "off";
@@ -69,7 +70,7 @@ function ensureAudio(): HTMLAudioElement | null {
 if (typeof document !== "undefined") {
   // Be polite: pause when the tab is hidden, resume when it comes back.
   document.addEventListener("visibilitychange", () => {
-    if (!audio || muted || !started) return;
+    if (!audio || muted || !started || suspended) return;
     if (document.hidden) audio.pause();
     else void audio.play().catch(() => undefined);
   });
@@ -87,9 +88,16 @@ export const music = {
     emit();
   },
   /** Call from a user gesture. Safe to call many times. */
+  /** The formal portfolio is silent; the game version plays music. */
+  setSuspended(value: boolean) {
+    suspended = value;
+    if (!audio) return;
+    if (suspended) audio.pause();
+    else if (started && !muted) void audio.play().catch(() => undefined);
+  },
   start() {
     const a = ensureAudio();
-    if (!a || started) return;
+    if (!a || started || suspended) return;
     started = true;
     if (!muted) {
       a.play().catch(() => {
@@ -110,7 +118,7 @@ export const music = {
       a.pause();
     } else {
       started = true;
-      void a.play().catch(() => undefined);
+      if (!suspended) void a.play().catch(() => undefined);
     }
     emit();
   },

@@ -141,3 +141,27 @@
     height: 12px;
   }
 }
+
+/* The formal portfolio is a normal, scrolling web page. The game's html/body overflow
+   rules would otherwise create nested scroll containers, so they are relaxed here. */
+html.formal-mode,
+html.formal-mode body {
+  overflow-x: clip;
+  overflow-y: visible;
+  height: auto;
+  overscroll-behavior: auto;
+}
+html.formal-mode body {
+  background-color: #020617;
+}
+html.formal-mode::-webkit-scrollbar {
+  display: block;
+  width: 12px;
+}
+html.formal-mode::-webkit-scrollbar-track {
+  background: #0f172a;
+}
+html.formal-mode::-webkit-scrollbar-thumb {
+  background: #7dd3fc;
+  border: 3px solid #0f172a;
+}

@@ -30,6 +30,8 @@ const HERO_VISIBLE_AT = 0.8;
 
 interface ScrollIntroProps {
   onStart: () => void;
+  /** Lets the visitor skip the game and open the formal portfolio instead. */
+  onChooseFormal?: () => void;
 }
 
 const clamp01 = (n: number) => Math.min(1, Math.max(0, n));
@@ -144,10 +146,12 @@ function Percent({ progress }: { progress: MotionValue<number> }) {
 
 /* ---------- main component ---------- */
 
-export function ScrollIntro({ onStart }: ScrollIntroProps) {
+export function ScrollIntro({ onStart, onChooseFormal }: ScrollIntroProps) {
   const prefersReducedMotion = usePrefersReducedMotion();
   const { scrollYProgress } = useScroll();
   const [heroReady, setHeroReady] = useState(false);
+  // the mode buttons on the title screen are only clickable while that screen is visible
+  const [titleActive, setTitleActive] = useState(true);
 
   // Always start the console UI at the top of the page.
   useEffect(() => {
@@ -156,6 +160,7 @@ export function ScrollIntro({ onStart }: ScrollIntroProps) {
 
   useMotionValueEvent(scrollYProgress, "change", (v) => {
     setHeroReady(v >= HERO_VISIBLE_AT);
+    setTitleActive(v < 0.1);
   });
 
   const titleOpacity = useTransform(scrollYProgress, [0, 0.12, 0.2], [1, 1, 0]);
@@ -166,7 +171,20 @@ export function ScrollIntro({ onStart }: ScrollIntroProps) {
   const heroOpacity = useTransform(scrollYProgress, [HERO_VISIBLE_AT, 0.92], [0, 1]);
 
   if (prefersReducedMotion) {
-    return <Hero onStart={onStart} />;
+    return (
+      <>
+        <Hero onStart={onStart} />
+        {onChooseFormal && (
+          <PixelButton
+            variant="secondary"
+            onClick={onChooseFormal}
+            className="fixed left-4 top-4 z-50 px-3 py-2 text-label-sm font-label-sm"
+          >
+            FORMAL MODE
+          </PixelButton>
+        )}
+      </>
+    );
   }
 
   const bootLines = [
@@ -177,6 +195,10 @@ export function ScrollIntro({ onStart }: ScrollIntroProps) {
   ];
   const LOG_START = 0.22;
   const LOG_STEP = 0.095;
+
+  const startGameMode = () => {
+    window.scrollTo({ top: window.innerHeight * 1.2, behavior: "smooth" });
+  };
 
   const skipToEnd = () => {
     window.scrollTo({ top: document.documentElement.scrollHeight, behavior: "smooth" });
@@ -197,20 +219,42 @@ export function ScrollIntro({ onStart }: ScrollIntroProps) {
         {/* Scene 1: title */}
         <motion.div
           style={{ opacity: titleOpacity }}
-          className="absolute inset-0 flex flex-col items-center justify-center gap-10 text-center px-4"
+          className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center gap-8 px-4 text-center"
         >
           <h1 className="font-headline-xl-mobile md:font-headline-xl text-headline-xl-mobile md:text-headline-xl text-primary drop-shadow-[4px_4px_0_#082f49] leading-relaxed">
             PORTOPIXEL
           </h1>
+
+          {/* Mode chooser */}
+          <div
+            className="flex flex-col items-center gap-4"
+            style={{ pointerEvents: titleActive ? "auto" : "none" }}
+          >
+            <p className="font-label-sm text-label-sm text-on-surface-variant">CHOOSE HOW TO EXPLORE</p>
+            <div className="flex flex-col items-stretch gap-3 sm:flex-row">
+              <PixelButton variant="primary" onClick={startGameMode} className="px-5 py-3 text-label-sm font-label-sm">
+                ▶ GAME MODE
+              </PixelButton>
+              {onChooseFormal && (
+                <PixelButton variant="secondary" onClick={onChooseFormal} className="px-5 py-3 text-label-sm font-label-sm">
+                  FORMAL MODE
+                </PixelButton>
+              )}
+            </div>
+            <p className="max-w-xs font-label-sm text-label-sm leading-relaxed text-on-surface-variant">
+              {onChooseFormal ? "GAME: AN INTERACTIVE CITY · FORMAL: A CLEAN, QUICK-TO-READ PAGE" : ""}
+            </p>
+          </div>
+
           <p className="font-headline-md text-headline-md text-on-surface-variant cursor-blink">
-            SCROLL TO START ▼
+            OR SCROLL DOWN ▼
           </p>
         </motion.div>
 
         {/* Scene 2: boot log typed by scroll */}
         <motion.div
           style={{ opacity: logOpacity }}
-          className="absolute inset-0 flex items-center justify-center px-6"
+          className="pointer-events-none absolute inset-0 flex items-center justify-center px-6"
         >
           <div className="w-full max-w-xl border-[6px] border-primary bg-surface-container-low p-6 md:p-8 shadow-[8px_8px_0_0_#020617] flex flex-col gap-5">
             {bootLines.map((line, i) => (
@@ -228,7 +272,7 @@ export function ScrollIntro({ onStart }: ScrollIntroProps) {
         {/* Scene 3: loading bar = scroll position */}
         <motion.div
           style={{ opacity: loadOpacity }}
-          className="absolute inset-0 flex flex-col items-center justify-center gap-4 px-6"
+          className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center gap-4 px-6"
         >
           <p className="font-headline-md text-headline-md text-primary">LOADING</p>
           <div className="w-full max-w-md h-8 border-[4px] border-primary bg-surface-container-low p-1">

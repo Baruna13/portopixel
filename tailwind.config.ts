@@ -63,6 +63,22 @@ export default {
 
         outline: "#64748b",
         "outline-variant": "#334155",
+
+        // Palette of the formal (recruiter-friendly) version. Prefix "fp-" keeps it
+        // fully separate from the pixel theme above.
+        fp: {
+          bg: "#f1fcf3",
+          low: "#e9f5eb",
+          card: "#ffffff",
+          tint: "#e0ebe2",
+          line: "#cfdccf",
+          ink: "#141e18",
+          muted: "#4a524b",
+          brand: "#1b3022",
+          accent: "#2d4b34",
+          sage: "#c3e6c6",
+          dark: "#0f1f15",
+        },
       },
       borderRadius: {
         DEFAULT: "0.25rem",
@@ -85,6 +101,8 @@ export default {
         "label-sm": ['"Press Start 2P"', "monospace"],
         "body-lg": ["Silkscreen", "monospace"],
         "body-md": ["Silkscreen", "monospace"],
+        jakarta: ['"Plus Jakarta Sans"', "system-ui", "sans-serif"],
+        inter: ["Inter", "system-ui", "sans-serif"],
       },
       fontSize: {
         "headline-xl": ["32px", { lineHeight: "1.2", fontWeight: "400" }],

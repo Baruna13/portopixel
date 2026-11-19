@@ -35,6 +35,8 @@ interface WorldProps {
   /** Building the player just came out of; they spawn at its door. */
   spawnPath?: NavPath | null;
   onEnter: (path: NavPath) => void;
+  /** Opens the formal (non-game) portfolio. */
+  onSwitchToFormal?: () => void;
 }
 
 interface NpcState {
@@ -144,7 +146,7 @@ function HelpRow({ groups, text }: { groups: string[][]; text: string }) {
   );
 }
 
-export function World({ spawnPath = null, onEnter }: WorldProps) {
+export function World({ spawnPath = null, onEnter, onSwitchToFormal }: WorldProps) {
   const reduced = usePrefersReducedMotion();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -626,6 +628,17 @@ export function World({ spawnPath = null, onEnter }: WorldProps) {
                 </button>
               </li>
             ))}
+            {onSwitchToFormal && (
+              <li className="mt-1 border-t-2 border-outline-variant pt-2">
+                <button
+                  type="button"
+                  onClick={onSwitchToFormal}
+                  className="w-full px-3 py-2 text-left font-label-sm text-label-sm text-secondary hover:bg-primary hover:text-on-primary focus-visible:bg-primary focus-visible:text-on-primary focus-visible:outline-none"
+                >
+                  ▶ FORMAL VERSION
+                </button>
+              </li>
+            )}
           </ul>
         )}
       </div>

@@ -1,19 +1,7 @@
 import { Github, Linkedin, Mail, FileText, Swords, type LucideIcon } from "lucide-react";
 import { SOCIAL_LINKS } from "@/data/social";
+import { CV_DOWNLOAD_NAME, CV_URL } from "@/data/cv";
 import { cn } from "@/lib/utils";
-
-/**
- * The CV is picked up automatically: export it from Word as PDF and drop it into
- * src/assets/cv/ (any file name). Until a PDF exists the tile shows COMING SOON.
- * (A link in SOCIAL_LINKS.resumeUrl, e.g. Google Drive, also works as a fallback.)
- */
-const cvFiles = import.meta.glob("../../assets/cv/*.pdf", {
-  eager: true,
-  query: "?url",
-  import: "default",
-}) as Record<string, string>;
-const CV_URL: string | undefined = Object.values(cvFiles)[0] ?? SOCIAL_LINKS.resumeUrl;
-const CV_DOWNLOAD_NAME = "CV-Mochamad-Emil-Baruna-Amirudin.pdf";
 
 const cvActionClass = cn(
   "border-2 border-primary bg-surface px-3 py-2 font-label-sm text-label-sm text-primary transition-colors",
