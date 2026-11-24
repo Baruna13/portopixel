@@ -7,7 +7,7 @@ import type { SocialLinks } from "@/types";
  */
 export const SOCIAL_LINKS: SocialLinks = {
   github: "https://github.com/Baruna13",
-  linkedin: undefined,
+  linkedin: "https://www.linkedin.com/in/mochamad-emil-baruna/",
   email: "mochamademilbaruna@gmail.com",
   resumeUrl: undefined, // the CV PDF in src/assets/cv/ is picked up automatically
 };
